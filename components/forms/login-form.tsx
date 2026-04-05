@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
 import Google from '@/public/images/search.png';
 import LoginPic from '@/public/images/Login-pic.png';
+import Link from 'next/link';
 
 export function LoginForm({
   className,
@@ -91,8 +92,15 @@ export function LoginForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center text-gray-300">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{' '}
-        and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our{' '}
+        <Link href="#" className="hover:text-white!">
+          Terms of Service
+        </Link>{' '}
+        and{' '}
+        <Link href="#" className="hover:text-white!">
+          Privacy Policy
+        </Link>
+        .
       </FieldDescription>
     </div>
   );
