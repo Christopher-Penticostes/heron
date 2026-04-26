@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'PesoFi',
-  description: 'Philippine Peso Financial Tracker',
+  title: 'Heron',
+  description: 'Job Application Tracker',
 };
 
 export default function RootLayout({
