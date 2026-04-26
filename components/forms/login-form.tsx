@@ -72,6 +72,7 @@ export function LoginForm({
                   variant="outline"
                   type="button"
                   onClick={handleLoginWithGoogle}
+                  className="bg-white"
                 >
                   <Image src={Google} alt="Image" width={19} height={19} />
                   Login with Google

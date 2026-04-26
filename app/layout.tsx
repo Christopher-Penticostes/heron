@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Heron',
+  title: 'Heron - Job Application Tracker',
   description: 'Job Application Tracker',
 };
 

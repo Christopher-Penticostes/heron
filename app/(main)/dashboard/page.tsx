@@ -1,3 +1,7 @@
+export const metadata = {
+  title: 'Dashboard - Heron',
+};
+
 export default function DashboardPage() {
   return (
     <div className="pt-0 px-8">
