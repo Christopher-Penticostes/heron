@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -21,9 +22,22 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
   const handleLoginWithGoogle = async () => {
     await authClient.signIn.social({
       provider: 'google',
+      callbackURL: '/dashboard',
+    });
+  };
+
+  const handleLoginWithEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    await authClient.signIn.email({
+      email,
+      password,
       callbackURL: '/dashboard',
     });
   };
@@ -32,7 +46,7 @@ export function LoginForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" onSubmit={handleLoginWithEmail}>
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -47,6 +61,8 @@ export function LoginForm({
                   type="email"
                   placeholder="m@example.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </Field>
               <Field>
@@ -59,7 +75,13 @@ export function LoginForm({
                     Forgot your password?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </Field>
               <Field>
                 <Button type="submit">Login</Button>
