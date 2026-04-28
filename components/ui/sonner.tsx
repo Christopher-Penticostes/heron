@@ -36,7 +36,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
         classNames: {
           success:
             '!bg-green-100 !text-green-600 !border-green-600 [&_svg]:!text-green-600 [&_svg]:translate-y-[1px]',
-          error: '!bg-red-600 !text-white !border-red-600 [&_svg]:!text-white',
+          error:
+            '!bg-red-100 !text-red-600 !border-red-600 [&_svg]:!text-red-600 [&_svg]:translate-y-[1px]',
         },
       }}
       {...props}

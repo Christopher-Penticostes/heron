@@ -12,21 +12,61 @@ import Link from 'next/link';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from '@/components/ui/field';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+const formSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Name must be at least 1 characters.')
+      .max(50, 'Name must be at most 50 characters.'),
+    email: z.email({ message: 'Invalid email address' }),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(15, 'Password must be maximum 15 characters')
+      .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Must contain at least one number')
+      .regex(/[^a-zA-Z0-9]/, 'Must contain at least one special character'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
   const handleLoginWithGoogle = async () => {
     await authClient.signIn.social({
@@ -35,33 +75,26 @@ export function SignupForm({
     });
   };
 
-  const handleLoginWithEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (password !== confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-
+  const handleLoginWithEmail = async (data: z.infer<typeof formSchema>) => {
     await authClient.signUp.email({
-      name,
-      email,
-      password,
+      name: data.name,
+      email: data.email,
+      password: data.password,
     });
 
-    setName('');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
+    form.reset();
 
     toast.success('Your account has been successfully created!');
   };
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 border-none">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleLoginWithEmail}>
+          <form
+            className="p-6 md:p-8"
+            onSubmit={form.handleSubmit(handleLoginWithEmail)}
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Create your account</h1>
@@ -69,53 +102,131 @@ export function SignupForm({
                   Enter your email below to create your account
                 </p>
               </div>
-              <Field>
-                <FieldLabel htmlFor="name">Name</FieldLabel>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Field>
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Name</FieldLabel>
+                    <Input
+                      {...field}
+                      id="name"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="John Doe"
+                      autoComplete="off"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="email"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Email</FieldLabel>
+                    <Input
+                      {...field}
+                      id="email"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="m@example.com"
+                      autoComplete="off"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
-                  <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </Field>
-                  <Field>
-                    <FieldLabel htmlFor="confirm-password">
-                      Confirm Password
-                    </FieldLabel>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                  </Field>
+                  <Controller
+                    name="password"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="password">Password</FieldLabel>
+                        <InputGroup>
+                          <InputGroupInput
+                            {...field}
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            aria-invalid={fieldState.invalid}
+                            autoComplete="off"
+                          />
+                          <InputGroupAddon
+                            align="inline-end"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            className="cursor-pointer"
+                          >
+                            {showPassword ? (
+                              <Eye className="size-4 hover:text-black" />
+                            ) : (
+                              <EyeOff className="size-4 hover:text-black" />
+                            )}
+                          </InputGroupAddon>
+                        </InputGroup>
+                      </Field>
+                    )}
+                  />
+                  <Controller
+                    name="confirmPassword"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="confirm-password">
+                          Confirm Password
+                        </FieldLabel>
+                        <InputGroup>
+                          <InputGroupInput
+                            {...field}
+                            id="confirm-password"
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            aria-invalid={fieldState.invalid}
+                            autoComplete="off"
+                          />
+                          <InputGroupAddon
+                            align="inline-end"
+                            onClick={() =>
+                              setShowConfirmPassword((prev) => !prev)
+                            }
+                            className="cursor-pointer"
+                          >
+                            {showConfirmPassword ? (
+                              <Eye className="size-4 hover:text-black" />
+                            ) : (
+                              <EyeOff className="size-4 hover:text-black" />
+                            )}
+                          </InputGroupAddon>
+                        </InputGroup>
+                      </Field>
+                    )}
+                  />
                 </Field>
+                <Controller
+                  name="password"
+                  control={form.control}
+                  render={({ fieldState }) => (
+                    <>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </>
+                  )}
+                />
+                <Controller
+                  name="confirmPassword"
+                  control={form.control}
+                  render={({ fieldState }) => (
+                    <>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </>
+                  )}
+                />
               </Field>
               <Field>
                 <Button type="submit">Create Account</Button>
