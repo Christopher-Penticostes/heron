@@ -8,22 +8,45 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from '@/components/ui/field';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Eye, EyeOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { authClient } from '@/lib/auth-client';
 import Google from '@/public/images/search.png';
 import LoginPic from '@/public/images/Login-pic.png';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Controller, useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+const formSchema = z.object({
+  email: z.email({ message: 'Invalid email address' }),
+  password: z.string().min(1, 'Password is required'),
+});
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'div'>) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   const handleLoginWithGoogle = async () => {
     await authClient.signIn.social({
@@ -32,21 +55,27 @@ export function LoginForm({
     });
   };
 
-  const handleLoginWithEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    await authClient.signIn.email({
-      email,
-      password,
+  const handleLoginWithEmail = async (data: z.infer<typeof formSchema>) => {
+    const { error } = await authClient.signIn.email({
+      email: data.email,
+      password: data.password,
       callbackURL: '/dashboard',
     });
+
+    if (error) {
+      toast.error('Invalid email or password');
+      return;
+    }
   };
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 border-none">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8" onSubmit={handleLoginWithEmail}>
+          <form
+            className="p-6 md:p-8"
+            onSubmit={form.handleSubmit(handleLoginWithEmail)}
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -54,35 +83,65 @@ export function LoginForm({
                   Login to your Heron account
                 </p>
               </div>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </Field>
+              <Controller
+                name="email"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Email</FieldLabel>
+                    <Input
+                      {...field}
+                      id="email"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="m@example.com"
+                      autoComplete="off"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="password"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <div className="flex items-center">
+                      <FieldLabel htmlFor="password">Password</FieldLabel>
+                      <Link
+                        href="#"
+                        className="ml-auto text-sm text-foreground underline-offset-2 hover:underline"
+                      >
+                        Forgot your password?
+                      </Link>
+                    </div>
+                    <InputGroup>
+                      <InputGroupInput
+                        {...field}
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        aria-invalid={fieldState.invalid}
+                        autoComplete="off"
+                      />
+                      <InputGroupAddon
+                        align="inline-end"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="cursor-pointer"
+                      >
+                        {showPassword ? (
+                          <Eye className="size-4 hover:text-black" />
+                        ) : (
+                          <EyeOff className="size-4 hover:text-black" />
+                        )}
+                      </InputGroupAddon>
+                    </InputGroup>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
               <Field>
                 <Button type="submit">Login</Button>
               </Field>
